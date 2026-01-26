@@ -1,0 +1,9 @@
+/build/
+managed_components/
+.vscode/
+sdkconfig
+sdkconfig.old
+sdkconfig.ci
+dependencies.lock
+.clangd
+.DS_Store
