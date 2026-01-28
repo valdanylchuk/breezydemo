@@ -28,6 +28,11 @@ static vterm_cell_t *s_display_buffer = NULL;
 
 static esp_lcd_panel_handle_t panel_handle = NULL;
 
+// Cursor state (volatile for IRAM callback access)
+static volatile int s_cursor_col = -1;  // -1 = hidden
+static volatile int s_cursor_row = -1;
+static uint32_t s_frame_count = 0;
+
 // LUTs
 static uint8_t font_ram[256][16];
 static uint32_t BYTE_MASKS[256][4];
@@ -85,6 +90,15 @@ static IRAM_ATTR bool on_bounce_empty(esp_lcd_panel_handle_t panel, void *buf,
     int num_lines = (len_bytes / 2) / SCREEN_WIDTH;
     const vterm_cell_t *src_buf = s_display_buffer;
 
+    // Frame counter for cursor blink (increment at start of each frame)
+    if (y_start == 0) s_frame_count++;
+
+    // Cursor state: check once per callback
+    int cursor_col = s_cursor_col;
+    int cursor_row = s_cursor_row;
+    // Blink at ~2Hz: frame_count >> 4 toggles every 16 frames (~0.5s at 30fps)
+    int cursor_blink_on = (s_frame_count >> 4) & 1;
+
     for (int line = 0; line < num_lines; line++) {
         int y = y_start + line;
         int text_row = y / FONT_HEIGHT;
@@ -92,6 +106,10 @@ static IRAM_ATTR bool on_bounce_empty(esp_lcd_panel_handle_t panel, void *buf,
 
         int glyph_y = y % FONT_HEIGHT;
         uint32_t *dest = (uint32_t *)((uint8_t *)buf + (line * SCREEN_WIDTH * 2));
+
+        // Check if cursor should be drawn on this scanline (last 2 rows of glyph)
+        int draw_cursor = (cursor_row >= 0 && text_row == cursor_row &&
+                          glyph_y >= FONT_HEIGHT - 2 && cursor_blink_on);
 
         // Get pointer to the start of the row in the cell buffer
         const vterm_cell_t *cell_row_ptr = &src_buf[text_row * TEXT_COLS];
@@ -126,6 +144,12 @@ static IRAM_ATTR bool on_bounce_empty(esp_lcd_panel_handle_t panel, void *buf,
                 *dest++ = (xor32_0 & m[3]) ^ bg32_0;
             }
 
+            // Cursor underscore for cell 0
+            if (draw_cursor && pair * 2 == cursor_col) {
+                uint32_t fg32 = bg32_0 ^ xor32_0;
+                dest[-4] = fg32; dest[-3] = fg32; dest[-2] = fg32; dest[-1] = fg32;
+            }
+
             // --- Render cell 1 ---
             uint32_t bg32_1 = ATTR_LUT[attr1][0];
             uint32_t xor32_1 = ATTR_LUT[attr1][1];
@@ -139,6 +163,12 @@ static IRAM_ATTR bool on_bounce_empty(esp_lcd_panel_handle_t panel, void *buf,
                 *dest++ = (xor32_1 & m[1]) ^ bg32_1;
                 *dest++ = (xor32_1 & m[2]) ^ bg32_1;
                 *dest++ = (xor32_1 & m[3]) ^ bg32_1;
+            }
+
+            // Cursor underscore for cell 1
+            if (draw_cursor && pair * 2 + 1 == cursor_col) {
+                uint32_t fg32 = bg32_1 ^ xor32_1;
+                dest[-4] = fg32; dest[-3] = fg32; dest[-2] = fg32; dest[-1] = fg32;
             }
         }
     }
@@ -209,4 +239,11 @@ void my_display_set_buffer(vterm_cell_t *cells)
 void my_display_refresh_palette(void)
 {
     rebuild_attr_lut();
+}
+
+// Set cursor position for blinking underscore (-1 to hide)
+void my_display_set_cursor(int col, int row)
+{
+    s_cursor_col = col;
+    s_cursor_row = row;
 }

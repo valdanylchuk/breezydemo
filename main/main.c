@@ -102,12 +102,22 @@ static int cmd_setcon(int argc, char **argv)
         console_output_mode_t mode = my_console_get_output_mode();
         const char *mode_str = (mode == CONSOLE_OUT_LCD) ? "lcd" :
                                 (mode == CONSOLE_OUT_USB) ? "usb" : "both";
+        int usb_connected = my_console_usb_connected();
         printf("Console output: %s\n", mode_str);
-        printf("Usage: setcon <lcd|usb|both>\n");
+        printf("USB status: %s\n", usb_connected ? "connected" : "disconnected (auto-skipped)");
+        printf("Usage: setcon <lcd|usb|both|usbreset>\n");
         return 0;
     }
 
     const char *arg = argv[1];
+
+    // Handle USB reset command
+    if (strcmp(arg, "usbreset") == 0) {
+        my_console_usb_reconnect();
+        printf("USB detection reset - will re-probe on next write\n");
+        return 0;
+    }
+
     console_output_mode_t mode;
 
     if (strcmp(arg, "lcd") == 0) {
@@ -118,7 +128,7 @@ static int cmd_setcon(int argc, char **argv)
         mode = CONSOLE_OUT_BOTH;
     } else {
         printf("Invalid mode: %s\n", arg);
-        printf("Usage: setcon <lcd|usb|both>\n");
+        printf("Usage: setcon <lcd|usb|both|usbreset>\n");
         return 1;
     }
 

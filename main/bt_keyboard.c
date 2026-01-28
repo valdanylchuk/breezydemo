@@ -3,8 +3,9 @@
 */
 
 #include "bt_keyboard.h"
-#include "my_console_io.h" 
+#include "my_console_io.h"
 #include "esp_log.h"
+#include <string.h>
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "esp_bt.h"
@@ -176,31 +177,99 @@ static int gap_event_listener(struct ble_gap_event *event, void *arg) {
 
 // ============ Key Processing ============
 
+// HID keycodes for special keys
+#define HID_KEY_ESC         0x29
+#define HID_KEY_F1          0x3A
+#define HID_KEY_F12         0x45
+#define HID_KEY_INSERT      0x49
+#define HID_KEY_HOME        0x4A
+#define HID_KEY_PAGEUP      0x4B
+#define HID_KEY_DELETE      0x4C
+#define HID_KEY_END         0x4D
+#define HID_KEY_PAGEDOWN    0x4E
+#define HID_KEY_RIGHT       0x4F
+#define HID_KEY_LEFT        0x50
+#define HID_KEY_DOWN        0x51
+#define HID_KEY_UP          0x52
+
+// Send ANSI escape sequence for special keys
+// Returns 1 if key was handled, 0 otherwise
+static int handle_special_key(uint8_t key) {
+    const char *seq = NULL;
+
+    switch (key) {
+    // Arrow keys: ESC [ A/B/C/D
+    case HID_KEY_UP:    seq = "\x1b[A"; break;
+    case HID_KEY_DOWN:  seq = "\x1b[B"; break;
+    case HID_KEY_RIGHT: seq = "\x1b[C"; break;
+    case HID_KEY_LEFT:  seq = "\x1b[D"; break;
+
+    // Navigation keys
+    case HID_KEY_HOME:     seq = "\x1b[H"; break;
+    case HID_KEY_END:      seq = "\x1b[F"; break;
+    case HID_KEY_INSERT:   seq = "\x1b[2~"; break;
+    case HID_KEY_DELETE:   seq = "\x1b[3~"; break;
+    case HID_KEY_PAGEUP:   seq = "\x1b[5~"; break;
+    case HID_KEY_PAGEDOWN: seq = "\x1b[6~"; break;
+
+    // F1-F12 keys (xterm-style sequences)
+    case HID_KEY_F1:  seq = "\x1bOP"; break;
+    case HID_KEY_F1+1: seq = "\x1bOQ"; break;
+    case HID_KEY_F1+2: seq = "\x1bOR"; break;
+    case HID_KEY_F1+3: seq = "\x1bOS"; break;
+    case HID_KEY_F1+4: seq = "\x1b[15~"; break;
+    case HID_KEY_F1+5: seq = "\x1b[17~"; break;
+    case HID_KEY_F1+6: seq = "\x1b[18~"; break;
+    case HID_KEY_F1+7: seq = "\x1b[19~"; break;
+    case HID_KEY_F1+8: seq = "\x1b[20~"; break;
+    case HID_KEY_F1+9: seq = "\x1b[21~"; break;
+    case HID_KEY_F1+10: seq = "\x1b[23~"; break;
+    case HID_KEY_F1+11: seq = "\x1b[24~"; break;
+
+    default:
+        return 0;  // Not a special key
+    }
+
+    // Send each character of the sequence
+    while (*seq) {
+        my_console_bt_receive(*seq++);
+    }
+    return 1;
+}
+
 static void process_key_report(const uint8_t *data, size_t len) {
     if (len < 2) return;
-    
+
     uint8_t mod = data[0];
     int key_start = (len == 8) ? 2 : 1;
-    
+
     int shift = (mod & 0x22);
     int ctrl = (mod & 0x11);
-    
+
     for (int i = key_start; i < len && i < key_start + 6; i++) {
         uint8_t key = data[i];
-        if (key == 0 || key >= sizeof(HID_MAP)) continue;
-        
+        if (key == 0) continue;
+
         int already = 0;
         for (int j = 0; j < 6; j++) {
             if (s_last_keys[j] == key) already = 1;
         }
-        
+
         if (!already) {
-            char c = shift ? HID_MAP_SHIFT[key] : HID_MAP[key];
-            if (ctrl && c >= 'a' && c <= 'z') c = c - 'a' + 1;
-            if (c) my_console_bt_receive(c);
+            // Try special keys first (arrows, F-keys, etc.)
+            if (handle_special_key(key)) {
+                continue;  // Handled as special key
+            }
+
+            // Regular key from HID_MAP
+            if (key < sizeof(HID_MAP)) {
+                char c = shift ? HID_MAP_SHIFT[key] : HID_MAP[key];
+                if (ctrl && c >= 'a' && c <= 'z') c = c - 'a' + 1;
+                if (c) my_console_bt_receive(c);
+            }
         }
     }
-    
+
     for (int i = 0; i < 6; i++) {
         s_last_keys[i] = (key_start + i < len) ? data[key_start + i] : 0;
     }

@@ -1,4 +1,5 @@
 dependencies:
   idf:
     version: '>=5.5.0'
-  valdanylchuk/breezybox: '*'
+  valdanylchuk/breezybox:
+     version: '>=1.0.2'

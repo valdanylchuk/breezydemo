@@ -67,3 +67,22 @@ void my_console_set_output_mode(console_output_mode_t mode);
  * @return Current output mode
  */
 console_output_mode_t my_console_get_output_mode(void);
+
+/**
+ * @brief Check if USB console is connected
+ *
+ * Returns the detected USB connection state. USB is auto-detected at startup
+ * and monitored during writes. When USB is disconnected and mode is BOTH,
+ * USB writes are automatically skipped to avoid performance degradation.
+ *
+ * @return 1 if USB is connected, 0 if disconnected
+ */
+int my_console_usb_connected(void);
+
+/**
+ * @brief Reset USB connection detection
+ *
+ * Call this to re-enable USB writes after the cable has been reconnected.
+ * The next write will re-probe USB connectivity.
+ */
+void my_console_usb_reconnect(void);

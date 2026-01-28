@@ -12,7 +12,7 @@ It started as a "cyberdeck" style crafting project. Then I got carried away with
 
 > ESP32-S3 can do everything those PCs did and more, but that is inconvenient out of the box, because that is not the commercial use case it is positioned for. It also forces away the code bloat. If you are like me, and love small elegant things, and technology that punches way above its weight, you ought to try it!
 
-So anyway, I decided to try and package some key missing parts: a basic vterm, the current working directlory (CWD) tracking, a few familiar UNIX-like commands, and an app installer. Believe it or not, the rest is already there in ESP-IDF components, including the elf_loader with dynamic linking.
+So anyway, I decided to try and package some key missing parts: a basic vterm, the current working directory (CWD) tracking, a few familiar UNIX-like commands, and an app installer. Believe it or not, the rest is already there in ESP-IDF components, including the elf_loader with dynamic linking.
 
 The result is called "BreezyBox", by analogy with the BusyBox commands suite. The name is just a light joke, it is not meant to be a full clone. You can import it with one command in your ESP-IDF project, and if you have some stdio going, even at "Hello World" level, it should mostly just work. I call it a "mini shell", a naïve user might call it an OS (it is not, it runs on FreeRTOS), and you can also call it the userland layer.
 
@@ -32,12 +32,12 @@ This is free software under [MIT License](LICENSE).
 
 ## Contributing: Help Wanted!
 
-My top three wishes for the kind and mighty wizards of github:
+The best help is currently more testing beyond "works on my computer", more shared examples and fun use cases:
 
 1. More ELF apps – see the examples at my [breezyapps repo](https://github.com/valdanylchuk/breezyapps), they are super easy to follow. Even a carefully written stdlib C program with no platform-specific bits may work sometimes, also with some ANSI codes. But be sure to verify on the actual ESP32-S3: the memory is tight, the larger PSRAM requires alignment, and there are other limits and quirks. You can publish and install the apps using your own repo.
 
-2. More full example firmware repositories: for different boards, with different styles. Maybe you provide the basic LVGL text label example on some popular board. Maybe you prefer C++ to plain C. Maybe you embrace the GUI. Maybe you port some retro games. Maybe you even make it work on P4, or C6 (RISC-V, a completely different CPU). Maybe you attach some cool gadgets to it. Maybe you build an extra cool cyberdeck case. It would just be so cool to see more actual devices running it, and to have more ready-to-clone examples for everyone!
+2. More full example firmware repositories: for different boards, with different styles. Maybe you provide the basic LVGL text label example on some popular board. Maybe you prefer C++ to plain C. Maybe you embrace the GUI. Maybe you port some retro games. Maybe you even make it work on P4, or C6 (RISC-V, a completely different CPU). Maybe you attach some cool gadgets to it. Maybe you build an extra cool cyberdeck case. Or maybe you reproduce the exact same thing, and just share your setup experience and hands-on impressions.
 
-3. Community support. It is an open system. If it does catch on, there will be forks, and multiple ELF repos, and all sorts of confused questions, and obscure gold nuggets. Perhaps together we can shape it all nicely: start a discord group, a subreddit, a wiki, an "awesome list", some tutorial, some hackathon, that sort of thing.
+It would be so cool to see more people using BreezyBox, and to have more ready-to-clone examples for everyone!
 
-If I can dream :)
+Have fun!

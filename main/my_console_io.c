@@ -20,15 +20,23 @@
 #include <errno.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define CONSOLE_DEV_PATH "/dev/breezy"
 
-// Track O_NONBLOCK flag
-static int s_stdin_flags = 0;
-static int s_stdout_flags = 0;
+// Track O_NONBLOCK flag per local fd
+// We support up to 4 open fds (stdin, stdout, and their stdio duplicates)
+#define MAX_CONSOLE_FDS 4
+static int s_fd_flags[MAX_CONSOLE_FDS] = {0};
+static int s_next_local_fd = 0;
 
 // Console output routing mode
 static console_output_mode_t s_output_mode = CONSOLE_OUT_BOTH;
+
+// USB connectivity state
+static int s_usb_connected = 1;  // Assume connected until proven otherwise
+static int s_usb_fail_count = 0;
+#define USB_FAIL_THRESHOLD 3     // Switch to LCD-only after this many consecutive failures
 
 void my_console_bt_receive(char c)
 {
@@ -81,13 +89,35 @@ static ssize_t my_console_write(int fd, const void *data, size_t size)
     if (s_output_mode == CONSOLE_OUT_BOTH || s_output_mode == CONSOLE_OUT_LCD) {
         int active = vterm_get_active();
         vterm_write(active, str, size);
+
+        // Sync cursor position for display
+        int col, row, visible;
+        vterm_get_cursor(active, &col, &row, &visible);
+        my_display_set_cursor(visible ? col : -1, row);
     }
 
-    // Write to USB Serial if enabled
-    if (s_output_mode == CONSOLE_OUT_BOTH || s_output_mode == CONSOLE_OUT_USB) {
+    // Write to USB Serial if enabled and USB is connected
+    if ((s_output_mode == CONSOLE_OUT_BOTH || s_output_mode == CONSOLE_OUT_USB) && s_usb_connected) {
         // Skip device status queries to avoid duplicate responses from remote terminal
         if (!is_terminal_probe(str, size)) {
-            usb_serial_jtag_write_bytes(data, size, pdMS_TO_TICKS(10));
+            // Use a short timeout (1ms) to detect disconnection quickly
+            int written = usb_serial_jtag_write_bytes(data, size, pdMS_TO_TICKS(1));
+
+            if (written < (int)size) {
+                // Write failed or incomplete - USB might be disconnected
+                s_usb_fail_count++;
+                if (s_usb_fail_count >= USB_FAIL_THRESHOLD && s_output_mode == CONSOLE_OUT_BOTH) {
+                    // Auto-switch to LCD-only mode
+                    s_usb_connected = 0;
+                    // Note: We don't change s_output_mode so user can manually switch back
+                }
+            } else {
+                // Write succeeded - USB is connected
+                s_usb_fail_count = 0;
+                if (!s_usb_connected) {
+                    s_usb_connected = 1;  // USB reconnected
+                }
+            }
         }
     }
 
@@ -98,8 +128,9 @@ static ssize_t my_console_read(int fd, void *data, size_t size)
 {
     char *buf = (char *)data;
     size_t count = 0;
-    int nonblock = (s_stdin_flags & O_NONBLOCK);
-    
+    int idx = (fd >= 0 && fd < MAX_CONSOLE_FDS) ? fd : 0;
+    int nonblock = (s_fd_flags[idx] & O_NONBLOCK);
+
     while (count < size) {
         // Drain USB bytes into vterm input queue
         char c;
@@ -139,13 +170,22 @@ static ssize_t my_console_read(int fd, void *data, size_t size)
             vTaskDelay(pdMS_TO_TICKS(5));
         }
     }
-    
+
     return count;
 }
 
 static int my_console_open(const char *path, int flags, int mode)
 {
-    return 0;
+    // Return unique local fd for each open
+    int fd = s_next_local_fd;
+    s_next_local_fd = (s_next_local_fd + 1) % MAX_CONSOLE_FDS;
+
+    // Initialize flags (store O_RDONLY/O_WRONLY/O_RDWR info)
+    if (fd < MAX_CONSOLE_FDS) {
+        s_fd_flags[fd] = flags & O_NONBLOCK;  // Only track O_NONBLOCK
+    }
+
+    return fd;
 }
 
 static int my_console_close(int fd)
@@ -186,14 +226,15 @@ static int my_console_tcgetattr(int fd, struct termios *p)
 
 static int my_console_fcntl(int fd, int cmd, int arg)
 {
-    // Determine which fd we're dealing with (stdin=0, stdout=1)
-    int *flags = (fd == STDIN_FILENO) ? &s_stdin_flags : &s_stdout_flags;
-    
+    // Use local fd to index flags array
+    // Clamp fd to valid range
+    int idx = (fd >= 0 && fd < MAX_CONSOLE_FDS) ? fd : 0;
+
     switch (cmd) {
     case F_GETFL:
-        return *flags;
+        return s_fd_flags[idx];
     case F_SETFL:
-        *flags = arg;
+        s_fd_flags[idx] = arg & O_NONBLOCK;  // Only track O_NONBLOCK
         return 0;
     default:
         return 0;
@@ -206,6 +247,11 @@ static void on_vt_switch(int new_vt)
     char msg[32];
     snprintf(msg, sizeof(msg), "\r\n[Switched to VT%d]\r\n", new_vt);
     usb_serial_jtag_write_bytes(msg, strlen(msg), pdMS_TO_TICKS(10));
+
+    // Sync cursor for new VT
+    int col, row, visible;
+    vterm_get_cursor(new_vt, &col, &row, &visible);
+    my_display_set_cursor(visible ? col : -1, row);
 }
 
 // Custom log handler - always writes to USB, bypassing console VFS
@@ -219,6 +265,23 @@ static int usb_log_vprintf(const char *fmt, va_list args)
     return len;
 }
 
+// Probe USB connectivity by attempting a small write
+static void probe_usb_connection(void)
+{
+    // Try to write a single byte with very short timeout
+    // If it fails, USB is likely not connected
+    char probe = '\0';  // Null byte won't affect anything
+    int written = usb_serial_jtag_write_bytes(&probe, 1, pdMS_TO_TICKS(5));
+
+    if (written <= 0) {
+        s_usb_connected = 0;
+        s_usb_fail_count = USB_FAIL_THRESHOLD;
+    } else {
+        s_usb_connected = 1;
+        s_usb_fail_count = 0;
+    }
+}
+
 esp_err_t my_console_init(void)
 {
     // Initialize vterm system
@@ -230,6 +293,11 @@ esp_err_t my_console_init(void)
     if (buf) {
         my_display_set_buffer(buf);
     }
+
+    // Initialize cursor position for active VT
+    int col, row, visible;
+    vterm_get_cursor(vterm_get_active(), &col, &row, &visible);
+    my_display_set_cursor(visible ? col : -1, row);
 
     vterm_set_switch_callback(on_vt_switch);
     
@@ -251,17 +319,38 @@ esp_err_t my_console_init(void)
     
     ret = esp_vfs_register(CONSOLE_DEV_PATH, &vfs, NULL);
     if (ret != ESP_OK) return ret;
-    
-    // Redirect stdin/stdout
+
+    // Close the original stdin/stdout fds (0, 1) to free them up
+    // This allows our VFS opens to get these low fd numbers
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+
+    // Open our VFS - should get fd 0 (stdin) and fd 1 (stdout) since they're now free
+    int fd_in = open(CONSOLE_DEV_PATH, O_RDONLY);
+    int fd_out = open(CONSOLE_DEV_PATH, O_WRONLY);
+
+    // Verify we got the expected fds
+    if (fd_in != STDIN_FILENO || fd_out != STDOUT_FILENO) {
+        // If we didn't get 0 and 1, something's wrong, but try to continue
+        // Close the wrong fds and try freopen which might work better
+        if (fd_in >= 0) close(fd_in);
+        if (fd_out >= 0) close(fd_out);
+    }
+
+    // Redirect the stdio FILE* streams to use our VFS
+    // freopen() ensures the C library's buffered I/O uses our VFS
     if (!freopen(CONSOLE_DEV_PATH, "r", stdin)) return ESP_FAIL;
     if (!freopen(CONSOLE_DEV_PATH, "w", stdout)) return ESP_FAIL;
-    
+
     // Disable buffering
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stdout, NULL, _IONBF, 0);
 
     // Redirect ESP_LOG to always use USB (bypasses stdout redirection)
     esp_log_set_vprintf(usb_log_vprintf);
+
+    // Probe USB connectivity - if disconnected, we'll auto-skip USB writes
+    probe_usb_connection();
 
     return ESP_OK;
 }
@@ -274,4 +363,16 @@ void my_console_set_output_mode(console_output_mode_t mode)
 console_output_mode_t my_console_get_output_mode(void)
 {
     return s_output_mode;
+}
+
+int my_console_usb_connected(void)
+{
+    return s_usb_connected;
+}
+
+void my_console_usb_reconnect(void)
+{
+    // Reset USB detection state - next write will re-probe
+    s_usb_connected = 1;
+    s_usb_fail_count = 0;
 }
