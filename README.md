@@ -4,7 +4,7 @@ This is a demo for how you can turn an ESP32-S3 microcontroller into a **tiny in
 
 ## That sounds too good to be true. What is BreezyBox anyway?
 
-First of all, seeing is believing:
+First of all, seeing is believing (click to watch the video):
 
 [![Watch the video](https://img.youtube.com/vi/wlDsaQgWCaI/maxresdefault.jpg)](https://youtu.be/wlDsaQgWCaI)
 
