@@ -6,7 +6,7 @@ This is a demo for how you can turn an ESP32-S3 microcontroller into a **tiny in
 
 First of all, seeing is believing:
 
-[insert demo video]
+https://youtu.be/wlDsaQgWCaI
 
 It started as a "cyberdeck" style crafting project. Then I got carried away with the software part. I chose ESP32-S3 for the base platform. It has the nostalgic appeal of the DOS era PCs, with similar resources, and elbow-deep-in-bytes coding experience, plus modern wireless comms.
 
