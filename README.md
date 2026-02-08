@@ -1,3 +1,5 @@
+![GitHub Discussions](https://img.shields.io/github/discussions/valdanylchuk/breezydemo)
+
 # BreezyBox shell demo for ESP32-S3
 
 This is a demo for how you can turn an ESP32-S3 microcontroller into a **tiny instant-on PC** with its own shell, editor, compiler, and online apps installer. Something like Raspberry Pi, minus the overhead of a full server/desktop grade OS. I think ESP32 is underrated in hobby maker community for this PC-like use case. This demo uses [BreezyBox](https://github.com/valdanylchuk/breezybox), my mini-shell ESP-IDF component.
@@ -39,5 +41,9 @@ The best help is currently more testing beyond "works on my computer", more shar
 2. More full example firmware repositories: for different boards, with different styles. Maybe you provide the basic LVGL text label example on some popular board. Maybe you prefer C++ to plain C. Maybe you embrace the GUI. Maybe you port some retro games. Maybe you even make it work on P4, or C6 (RISC-V, a completely different CPU). Maybe you attach some cool gadgets to it. Maybe you build an extra cool cyberdeck case. Or maybe you reproduce the exact same thing, and just share your setup experience and hands-on impressions.
 
 It would be so cool to see more people using BreezyBox, and to have more ready-to-clone examples for everyone!
+
+## Discussions: Drop by and say hello!
+
+Please take a moment and [introduce yourself in our GitHub Discussions!](https://github.com/valdanylchuk/breezydemo/discussions/new?category=general) Use "watch project" button on the upper right to follow those.
 
 Have fun!
