@@ -1,4 +1,4 @@
-![GitHub Discussions](https://img.shields.io/github/discussions/valdanylchuk/breezydemo)
+[![GitHub Discussions](https://img.shields.io/github/discussions/valdanylchuk/breezydemo)](https://github.com/valdanylchuk/breezydemo/discussions)
 
 # BreezyBox shell demo for ESP32-S3
 
@@ -41,6 +41,12 @@ The best help is currently more testing beyond "works on my computer", more shar
 2. More full example firmware repositories: for different boards, with different styles. Maybe you provide the basic LVGL text label example on some popular board. Maybe you prefer C++ to plain C. Maybe you embrace the GUI. Maybe you port some retro games. Maybe you even make it work on P4, or C6 (RISC-V, a completely different CPU). Maybe you attach some cool gadgets to it. Maybe you build an extra cool cyberdeck case. Or maybe you reproduce the exact same thing, and just share your setup experience and hands-on impressions.
 
 It would be so cool to see more people using BreezyBox, and to have more ready-to-clone examples for everyone!
+
+## Community repos
+
+Always exciting to see other people try BusyBox! Let me know if you have a repo I can link here.
+
+- [grahamg/esp32s3-N16R8-breezybox](https://github.com/grahamg/esp32s3-N16R8-breezybox) The same chip, different board; aiming for ssh use case; more detailed Readme.
 
 ## Discussions: Drop by and say hello!
 
