@@ -2,4 +2,8 @@ dependencies:
   idf:
     version: '>=5.5.0'
   valdanylchuk/breezybox:
-     version: '>=1.0.2'
+     version: '>=1.0.3'
+  valdanylchuk/breezy_bt:
+     version: '>=1.0.1'
+  valdanylchuk/breezy_rgb_lcd:
+     version: '>=1.0.0'

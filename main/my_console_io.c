@@ -6,7 +6,7 @@
  */
 
 #include "my_console_io.h"
-#include "my_display.h"
+#include "rgb_display.h"
 #include "vterm.h"
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
@@ -32,6 +32,7 @@ static int s_next_local_fd = 0;
 
 // Console output routing mode
 static console_output_mode_t s_output_mode = CONSOLE_OUT_BOTH;
+static console_output_mode_t s_saved_output_mode = CONSOLE_OUT_BOTH;
 
 // USB connectivity state
 static int s_usb_connected = 1;  // Assume connected until proven otherwise
@@ -85,6 +86,14 @@ static ssize_t my_console_write(int fd, const void *data, size_t size)
 {
     const char *str = (const char *)data;
 
+    // In graphics mode, skip vterm entirely - output goes to USB only
+    if (s_output_mode == CONSOLE_OUT_GFX) {
+        if (s_usb_connected) {
+            usb_serial_jtag_write_bytes(data, size, pdMS_TO_TICKS(1));
+        }
+        return size;
+    }
+
     // Write to LCD (via VTerm) if enabled
     if (s_output_mode == CONSOLE_OUT_BOTH || s_output_mode == CONSOLE_OUT_LCD) {
         int active = vterm_get_active();
@@ -93,7 +102,7 @@ static ssize_t my_console_write(int fd, const void *data, size_t size)
         // Sync cursor position for display
         int col, row, visible;
         vterm_get_cursor(active, &col, &row, &visible);
-        my_display_set_cursor(visible ? col : -1, row);
+        rgb_display_set_cursor(visible ? col : -1, row);
     }
 
     // Write to USB Serial if enabled and USB is connected
@@ -251,7 +260,7 @@ static void on_vt_switch(int new_vt)
     // Sync cursor for new VT
     int col, row, visible;
     vterm_get_cursor(new_vt, &col, &row, &visible);
-    my_display_set_cursor(visible ? col : -1, row);
+    rgb_display_set_cursor(visible ? col : -1, row);
 }
 
 // Custom log handler - always writes to USB, bypassing console VFS
@@ -282,6 +291,60 @@ static void probe_usb_connection(void)
     }
 }
 
+// --- Display component callbacks ---
+// These bridge the display component back to vterm + console I/O
+static void my_console_enter_graphics_mode_internal(void)
+{
+    s_saved_output_mode = s_output_mode;
+    s_output_mode = CONSOLE_OUT_GFX;
+}
+
+static void my_console_exit_graphics_mode_internal(void)
+{
+    s_output_mode = s_saved_output_mode;
+
+    int col, row, visible;
+    vterm_get_cursor(vterm_get_active(), &col, &row, &visible);
+    rgb_display_set_cursor(visible ? col : -1, row);
+}
+
+static const uint16_t *display_cb_get_text_palette(void)
+{
+    return vterm_get_palette();
+}
+
+static int display_cb_enter_graphics(void)
+{
+    vterm_enter_graphics_mode();
+    my_console_enter_graphics_mode_internal();
+    return 0;
+}
+
+static int display_cb_exit_graphics(void)
+{
+    vterm_exit_graphics_mode();
+    my_console_exit_graphics_mode_internal();
+    return 0;
+}
+
+static lcd_cell_t *display_cb_get_text_buffer(void)
+{
+    return (lcd_cell_t *)vterm_get_direct_buffer();
+}
+
+static void display_cb_flush_input(void)
+{
+    vterm_input_flush(vterm_get_active());
+}
+
+static const rgb_display_callbacks_t s_display_cbs = {
+    .get_text_palette = display_cb_get_text_palette,
+    .enter_graphics   = display_cb_enter_graphics,
+    .exit_graphics    = display_cb_exit_graphics,
+    .get_text_buffer  = display_cb_get_text_buffer,
+    .flush_input      = display_cb_flush_input,
+};
+
 esp_err_t my_console_init(void)
 {
     // Initialize vterm system
@@ -289,15 +352,19 @@ esp_err_t my_console_init(void)
     if (ret != ESP_OK) return ret;
 
     // Link vterm buffer directly to display (zero-copy)
+    // Cast: vterm_cell_t and lcd_cell_t have identical layout
     vterm_cell_t *buf = vterm_get_direct_buffer();
     if (buf) {
-        my_display_set_buffer(buf);
+        rgb_display_set_buffer((lcd_cell_t *)buf);
     }
+
+    // Register display callbacks (bridges vterm/console to display component)
+    rgb_display_set_callbacks(&s_display_cbs);
 
     // Initialize cursor position for active VT
     int col, row, visible;
     vterm_get_cursor(vterm_get_active(), &col, &row, &visible);
-    my_display_set_cursor(visible ? col : -1, row);
+    rgb_display_set_cursor(visible ? col : -1, row);
 
     vterm_set_switch_callback(on_vt_switch);
     
@@ -375,4 +442,14 @@ void my_console_usb_reconnect(void)
     // Reset USB detection state - next write will re-probe
     s_usb_connected = 1;
     s_usb_fail_count = 0;
+}
+
+void my_console_enter_graphics_mode(void)
+{
+    my_console_enter_graphics_mode_internal();
+}
+
+void my_console_exit_graphics_mode(void)
+{
+    my_console_exit_graphics_mode_internal();
 }

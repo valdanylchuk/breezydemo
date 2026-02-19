@@ -9,7 +9,7 @@
 #include "host/ble_store.h"
 
 #include "breezybox.h"
-#include "my_display.h"
+#include "rgb_display.h"
 #include "my_console_io.h"
 #include "bt_keyboard.h"
 #include "vterm.h"
@@ -22,10 +22,7 @@ int cmd_btscan(int argc, char **argv) {
     return bt_keyboard_scan_ex(verbose) == ESP_OK ? 0 : 1;
 }
 
-// Add declaration
-esp_err_t bt_keyboard_connect_native(void);
-
-// Add Command Wrapper
+// Command Wrapper
 int cmd_btconnect(int argc, char **argv) {
     return bt_keyboard_connect_native() == ESP_OK ? 0 : 1;
 }
@@ -158,9 +155,8 @@ void app_main(void)
 
     printf("\n--- Boot sequence complete. Starting ESP32-DOS ---\n");
 
-    // 1. Initialize Display Hardware
     printf("Initializing display...\n");
-    my_display_init();
+    rgb_display_init();
     printf("Display initialized\n");
 
     esp_err_t err = nvs_flash_init();
@@ -169,12 +165,13 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
-    // 2. Initialize VTerm & Console (also links vterm buffer to display)
+    // Initialize VTerm & Console (also links vterm buffer to display)
     if (my_console_init() != ESP_OK) {
         ESP_LOGE(TAG, "Console init failed!");
         return;
     }
 
+    bt_keyboard_set_char_callback(my_console_bt_receive);
     if (bt_keyboard_init() == ESP_OK) {
         // BT initialized successfully
     } else {
@@ -183,8 +180,9 @@ void app_main(void)
 
     breezybox_start_stdio(8192, 5);
 
-    // Register BT commands
-    const esp_console_cmd_t bt_cmds[] = {
+    // Register custom commands
+    extern int cmd_testgfx(int argc, char **argv);
+    static const esp_console_cmd_t cmds[] = {
         { .command = "btscan", .help = "Scan for BT keyboards", .hint = "[-v]", .func = &cmd_btscan },
         { .command = "btconnect", .help = "Connect to found HID", .func = &cmd_btconnect },
         { .command = "btclear", .help = "Clear saved BT devices", .func = &cmd_btclear },
@@ -193,11 +191,12 @@ void app_main(void)
         { .command = "keytest", .help = "Keys test", .func = &cmd_keytest },
         { .command = "colortest", .help = "ANSI colors test", .func = &cmd_colortest },
         { .command = "setcon", .help = "Set console output", .hint = "<lcd|usb|both>", .func = &cmd_setcon },
+        { .command = "testgfx", .help = "VGA graphics demo", .hint = "[-t seconds] [-v]", .func = &cmd_testgfx },
     };
-    for (int i = 0; i < sizeof(bt_cmds)/sizeof(bt_cmds[0]); i++) {
-        esp_console_cmd_register(&bt_cmds[i]);
+    for (int i = 0; i < sizeof(cmds)/sizeof(cmds[0]); i++) {
+        esp_console_cmd_register(&cmds[i]);
     }
 
-    // 4. Keep main task alive (display renders via DMA callbacks)
+    // Keep main task alive (display renders via DMA callbacks)
     main_loop();
 }

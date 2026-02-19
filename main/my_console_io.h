@@ -48,6 +48,7 @@ typedef enum {
     CONSOLE_OUT_BOTH = 0,   // Output to both LCD and USB (default)
     CONSOLE_OUT_LCD = 1,    // Output to LCD only
     CONSOLE_OUT_USB = 2,    // Output to USB only
+    CONSOLE_OUT_GFX = 3,    // Graphics mode: stdout to USB only (skip vterm)
 } console_output_mode_t;
 
 /**
@@ -86,3 +87,21 @@ int my_console_usb_connected(void);
  * The next write will re-probe USB connectivity.
  */
 void my_console_usb_reconnect(void);
+
+/**
+ * @brief Enter graphics mode console routing
+ *
+ * Saves current output mode and switches to CONSOLE_OUT_GFX.
+ * In graphics mode, stdout goes to USB only (vterm is bypassed).
+ * Call this when entering VGA graphics mode.
+ */
+void my_console_enter_graphics_mode(void);
+
+/**
+ * @brief Exit graphics mode console routing
+ *
+ * Restores the output mode that was active before graphics mode.
+ * Also syncs cursor position for the restored vterm.
+ * Call this when returning to text mode.
+ */
+void my_console_exit_graphics_mode(void);

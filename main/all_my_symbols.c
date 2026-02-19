@@ -2,7 +2,7 @@
 //   python managed_components/espressif__elf_loader/tool/symbols.py -i build/esp32dos.elf -t e
 // Should stay in:
 //   managed_components/espressif__elf_loader/src/esp_all_symbol.c
-// Copied here just for reference.
+// Copied here just for reference
 /*
  * SPDX-FileCopyrightText: 2024 Espressif Systems (Shanghai) CO LTD
  *
@@ -18,6 +18,25 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 extern int stpcpy;
+extern int fdopen;
+extern int fgetc;
+extern int freopen;
+extern int localtime;
+extern int ldexp;
+extern int realpath;
+extern int rgb_display_get_framebuffer;
+extern int rgb_display_set_mode;
+extern int rgb_display_set_vga_palette;
+extern int rgb_display_wait_vsync;
+extern int rgb_gfx_blit;
+extern int rgb_gfx_blit_flip;
+extern int rgb_gfx_clear;
+extern int rgb_gfx_pixel;
+extern int rgb_gfx_rectfill;
+extern int bt_keyboard_is_pressed;
+extern int bt_keyboard_get_modifiers;
+extern int bt_keyboard_connected;
+extern int roundf;
 extern int gzopen;
 extern int gzread;
 extern int gzwrite;
@@ -39,7 +58,7 @@ extern int esp_http_client_set_header;
 extern int elf_get_cycle_count;
 extern int vTaskDelayUntil;
 extern int xTaskGetTickCount;
-extern int my_display_refresh_palette;
+extern int rgb_display_refresh_palette;
 extern int vterm_set_palette;
 extern int vterm_get_palette;
 extern int srand;
@@ -342,7 +361,7 @@ extern int tcp_connect;
 extern int esp_intr_disable_source;
 extern int pbuf_add_header_force;
 extern int netconn_free;
-extern int my_display_init;
+extern int rgb_display_init;
 extern int panic_print_registers;
 extern int prefix_list;
 extern int ip4_output_if_opt;
@@ -1751,6 +1770,25 @@ extern int readdir;
 
 const struct esp_elfsym g_customer_elfsyms[] = {
     ESP_ELFSYM_EXPORT(stpcpy),
+    ESP_ELFSYM_EXPORT(fdopen),
+    ESP_ELFSYM_EXPORT(fgetc),
+    ESP_ELFSYM_EXPORT(freopen),
+    ESP_ELFSYM_EXPORT(localtime),
+    ESP_ELFSYM_EXPORT(ldexp),
+    ESP_ELFSYM_EXPORT(realpath),
+    ESP_ELFSYM_EXPORT(rgb_display_get_framebuffer),
+    ESP_ELFSYM_EXPORT(rgb_display_set_mode),
+    ESP_ELFSYM_EXPORT(rgb_display_set_vga_palette),
+    ESP_ELFSYM_EXPORT(rgb_display_wait_vsync),
+    ESP_ELFSYM_EXPORT(rgb_gfx_blit),
+    ESP_ELFSYM_EXPORT(rgb_gfx_blit_flip),
+    ESP_ELFSYM_EXPORT(rgb_gfx_clear),
+    ESP_ELFSYM_EXPORT(rgb_gfx_pixel),
+    ESP_ELFSYM_EXPORT(rgb_gfx_rectfill),
+    ESP_ELFSYM_EXPORT(bt_keyboard_is_pressed),
+    ESP_ELFSYM_EXPORT(bt_keyboard_get_modifiers),
+    ESP_ELFSYM_EXPORT(bt_keyboard_connected),
+    ESP_ELFSYM_EXPORT(roundf),
     ESP_ELFSYM_EXPORT(gzopen),
     ESP_ELFSYM_EXPORT(gzread),
     ESP_ELFSYM_EXPORT(gzwrite),
@@ -1772,7 +1810,7 @@ const struct esp_elfsym g_customer_elfsyms[] = {
     ESP_ELFSYM_EXPORT(elf_get_cycle_count),
     ESP_ELFSYM_EXPORT(vTaskDelayUntil),
     ESP_ELFSYM_EXPORT(xTaskGetTickCount),
-    ESP_ELFSYM_EXPORT(my_display_refresh_palette),
+    ESP_ELFSYM_EXPORT(rgb_display_refresh_palette),
     ESP_ELFSYM_EXPORT(vterm_set_palette),
     ESP_ELFSYM_EXPORT(vterm_get_palette),
     ESP_ELFSYM_EXPORT(srand),
@@ -2075,7 +2113,7 @@ const struct esp_elfsym g_customer_elfsyms[] = {
     ESP_ELFSYM_EXPORT(esp_intr_disable_source),
     ESP_ELFSYM_EXPORT(pbuf_add_header_force),
     ESP_ELFSYM_EXPORT(netconn_free),
-    ESP_ELFSYM_EXPORT(my_display_init),
+    ESP_ELFSYM_EXPORT(rgb_display_init),
     ESP_ELFSYM_EXPORT(panic_print_registers),
     ESP_ELFSYM_EXPORT(prefix_list),
     ESP_ELFSYM_EXPORT(ip4_output_if_opt),

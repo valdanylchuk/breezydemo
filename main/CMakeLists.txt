@@ -3,10 +3,8 @@ idf_component_register(
     # --- Source Files ---
     SRCS
         "main.c"
-        "my_display.c"
-        "terminus16.c"
         "my_console_io.c"
-        "bt_keyboard.c"
+        "cmd_testgfx.c"
 
     # --- Dependencies ---
     PRIV_REQUIRES
@@ -15,6 +13,8 @@ idf_component_register(
         fatfs
         esp_lcd
         breezybox
+        breezy_bt
+        breezy_rgb_lcd
         heap
         esp_hid
         bt
