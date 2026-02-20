@@ -10,6 +10,10 @@ First of all, seeing is believing (click to watch the video):
 
 [![Watch the video](https://img.youtube.com/vi/wlDsaQgWCaI/maxresdefault.jpg)](https://youtu.be/wlDsaQgWCaI)
 
+Update: BreezyBox does not limit you to text. Here is another demo, showing a graphics test and a playthrough of my [esp32 Celeste/Scrolleste port](https://github.com/valdanylchuk/ccleste):
+
+[![Watch the video](https://img.youtube.com/vi/nufOQWBmwpk/maxresdefault.jpg)](https://youtu.be/nufOQWBmwpk)
+
 It started as a "cyberdeck" style crafting project. Then I got carried away with the software part. I chose ESP32-S3 for the base platform. It has the nostalgic appeal of the DOS era PCs, with similar resources, and elbow-deep-in-bytes coding experience, plus modern wireless comms.
 
 > ESP32-S3 can do everything those PCs did and more, but that is inconvenient out of the box, because that is not the commercial use case it is positioned for. It also forces away the code bloat. If you are like me, and love small elegant things, and technology that punches way above its weight, you ought to try it!
