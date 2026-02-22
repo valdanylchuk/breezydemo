@@ -52,6 +52,8 @@ Always exciting to see other people try BusyBox! Let me know if you have a repo 
 
 - [grahamg/esp32s3-N16R8-breezybox](https://github.com/grahamg/esp32s3-N16R8-breezybox) The same chip, different board; aiming for ssh use case; more detailed Readme.
 
+- [oschettler/breezydemo](https://github.com/oschettler/breezydemo) The same chip, different board; ESP32-8048S043C; 4.3-inch; 800x480.
+
 ## Discussions: Drop by and say hello!
 
 Please take a moment and [introduce yourself in our GitHub Discussions!](https://github.com/valdanylchuk/breezydemo/discussions/new?category=general) Use "watch project" button on the upper right to follow those.
