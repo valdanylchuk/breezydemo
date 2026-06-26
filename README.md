@@ -1,6 +1,6 @@
-[![GitHub Discussions](https://img.shields.io/github/discussions/valdanylchuk/breezydemo)](https://github.com/valdanylchuk/breezydemo/discussions)
-
 # BreezyBox shell demo for ESP32-S3
+
+**Notice:** This repo is outdated, moved to [valdanylchuk/breezybox/examples/s3-waveshare](https://github.com/valdanylchuk/breezybox/blob/main/examples/s3-waveshare/)
 
 This is a demo for how you can turn an ESP32-S3 microcontroller into a **tiny instant-on PC** with its own shell, editor, compiler, and online apps installer. Something like Raspberry Pi, minus the overhead of a full server/desktop grade OS. I think ESP32 is underrated in hobby maker community for this PC-like use case. This demo uses [BreezyBox](https://github.com/valdanylchuk/breezybox), my mini-shell ESP-IDF component.
 
@@ -35,27 +35,5 @@ You do not have to write your own font renderer like I did here; that was just t
 ## License
 
 This is free software under [MIT License](LICENSE).
-
-## Contributing: Help Wanted!
-
-The best help is currently more testing beyond "works on my computer", more shared examples and fun use cases:
-
-1. More ELF apps – see the examples at my [breezyapps repo](https://github.com/valdanylchuk/breezyapps), they are super easy to follow. Even a carefully written stdlib C program with no platform-specific bits may work sometimes, also with some ANSI codes. But be sure to verify on the actual ESP32-S3: the memory is tight, the larger PSRAM requires alignment, and there are other limits and quirks. You can publish and install the apps using your own repo.
-
-2. More full example firmware repositories: for different boards, with different styles. Maybe you provide the basic LVGL text label example on some popular board. Maybe you prefer C++ to plain C. Maybe you embrace the GUI. Maybe you port some retro games. Maybe you even make it work on P4, or C6 (RISC-V, a completely different CPU). Maybe you attach some cool gadgets to it. Maybe you build an extra cool cyberdeck case. Or maybe you reproduce the exact same thing, and just share your setup experience and hands-on impressions.
-
-It would be so cool to see more people using BreezyBox, and to have more ready-to-clone examples for everyone!
-
-## Community repos
-
-Always exciting to see other people try BusyBox! Let me know if you have a repo I can link here.
-
-- [oschettler/breezydemo](https://github.com/oschettler/breezydemo) The same chip, different board; ESP32-8048S043C; 4.3-inch; 800x480.
-
-- [chrisdiana/breezybox-cardputer](https://github.com/chrisdiana/breezybox-cardputer) running on CardPuter ADV, also includes LUA scripting
-
-## Discussions: Drop by and say hello!
-
-Please take a moment and [introduce yourself in our GitHub Discussions!](https://github.com/valdanylchuk/breezydemo/discussions/new?category=general) Use "watch project" button on the upper right to follow those.
 
 Have fun!
