@@ -50,8 +50,6 @@ It would be so cool to see more people using BreezyBox, and to have more ready-t
 
 Always exciting to see other people try BusyBox! Let me know if you have a repo I can link here.
 
-- [grahamg/esp32s3-N16R8-breezybox](https://github.com/grahamg/esp32s3-N16R8-breezybox) The same chip, different board; aiming for ssh use case; more detailed Readme.
-
 - [oschettler/breezydemo](https://github.com/oschettler/breezydemo) The same chip, different board; ESP32-8048S043C; 4.3-inch; 800x480.
 
 - [chrisdiana/breezybox-cardputer](https://github.com/chrisdiana/breezybox-cardputer) running on CardPuter ADV, also includes LUA scripting
